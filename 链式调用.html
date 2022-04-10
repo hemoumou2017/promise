@@ -1,0 +1,180 @@
+<html>
+  <head>
+    <title>链式调用</title>
+  </head>
+  <body>
+    <h1>Promise -- 链式调用</h1>
+
+    <script>
+      // 1.基础架构
+      function myPromise(excutor) {
+        let self = this;
+        self.status = "pending";
+        self.value = null; // 接收值
+        self.reason = null; // 返回错误的原因
+        // 7. 发布订阅模式 支持异步操作
+        self.onFulfilledCallbacks = [];
+        self.onRejectedCallbacks = [];
+        // success callback
+        function resolve(value) {
+          // 5. 状态判断 只有等待状态才可以操作
+          if (self.status === "pending") {
+            self.value = value;
+            self.status = "fulfilled";
+            // 9. 状态更改， 发布 =》依次取出
+            self.onFulfilledCallbacks.forEach((item) => item(value));
+          }
+        }
+
+        // error callback()
+        function reject(reason) {
+          if (self.status === "pending") {
+            self.reason = reason;
+            self.reason = "rejected";
+            self.onRejectedCallbacks.forEach((item) => item(reason));
+          }
+        }
+
+        // 4.立即执行
+        try {
+          excutor(resolve, reject);
+        } catch (error) {
+          reject(err);
+        }
+      }
+
+      // 2 then方法
+      myPromise.prototype.then = function (onFulfilled, onRejected) {
+        // 6.状态改变了就调用 。then（）
+        onFulfilled =
+          typeof onFulfilled === "function"
+            ? onFulfilled
+            : function (data) {
+                resolve(data);
+              };
+        onRejected =
+          typeof onRejected === "function"
+            ? onRejected
+            : function (err) {
+                throw err;
+              };
+        // this 指向mypromise
+        let self = this;
+        // // 8.订阅的操作
+        // // 临时的解决方案
+        // if (self.status === "pending") {
+        //   self.onFulfilledCallbacks.push(onFulfilled);
+        //   self.onRejectedCallbacks.push(onRejected);
+        // }
+        // 10 链式调用
+        if (self.status === "fulfilled") {
+          return new myPromise((resolve, reject) => {
+            try {
+              let x = onFulfilled(self.value); //接收返回值
+              x instanceof myPromise ? x.then(resolve, reject) : resolve(x);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        }
+        if (self.status === "rejected") {
+          return new myPromise((resolve, reject) => {
+            try {
+              let x = onRejected(self.reason); //接收返回值
+              x instanceof myPromise ? x.then(resolve, reject) : resolve(x);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        }
+        if (self.status === "pending") {
+          return new myPromise((resolve, reject) => {
+            self.onFulfilledCallbacks.push(() => {
+              let x = onFulfilled(self.value); //接收返回值
+              x instanceof myPromise ? x.then(resolve, reject) : resolve(x);
+            });
+            self.onRejectedCallbacks.push(() => {
+              let x = onRejected(self.reason); //接收返回值
+              x instanceof myPromise ? x.then(resolve, reject) : resolve(x);
+            });
+          });
+        }
+        // console.log(this.status); //这里会是pengding状态，导致走不到后面，因此需要一个发布订阅模式，时时去做更新
+      };
+
+      // 12 .catch()
+      myPromise.prototype.catch = function (fn) {
+        return this.then(null, fn);
+      };
+
+      // 3. 构造函数立即执行
+      //   let demo = new myPromise((resolve, reject) => {
+      //     console.log("myPromise 装载已完成");
+      //     // 异步执行状态
+      //     setTimeout(() => {
+      //       resolve(1);
+      //     }, 1000);
+      //   });
+      //   demo.then((data) => console.log(data));
+
+      // 10 异步问题
+      // 1.then中可以通过return把值传给下一步 =》页面使用
+      // 2.可以返回一个新的promise传给下一步
+      // 3.保证链式调用的实现，上一次的then方法不去管他成功或失败，直接把他的参数作为下一个then中的成功的参数
+
+      let isForget = true;
+      let getPrisent = new myPromise((resolve, reject) => {
+        if (isForget) {
+          let prisent = {
+            color: "orange",
+            price: "$99",
+          };
+          resolve(prisent);
+        } else {
+          let err = new Error("do something");
+          reject(err);
+        }
+      });
+      //   let testFn = function () {
+      //     getPrisent
+      //       .then((fulfilled) => {
+      //         console.log(fulfilled);
+      //       })
+      //       .catch((reject) => {
+      //         console.log(reject);
+      //       });
+      //   };
+      //   testFn();
+      // {
+      //     "coor": "orange",
+      //     "price": "$99"
+      // }
+
+      let buyOther = (prisent) => {
+        let lip = {
+          brand: "卧槽",
+          color: "pink",
+        };
+        let msg = {
+          message: "我买的是" + lip.brand + lip.color + "搭配" + prisent.color,
+          lip: lip,
+          prisent: prisent,
+        };
+        return new myPromise(function (y, n) {
+          y(msg);
+        });
+      };
+      let testFn2 = () => {
+        getPrisent
+          .then(buyOther)
+          .then((fulfilled) => {
+            console.log(fulfilled);
+          })
+          .catch((rejected) => {
+            console.log(rejected);
+          });
+      };
+      testFn2();
+    </script>
+  </body>
+</html>

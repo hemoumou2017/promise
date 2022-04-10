@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+    <h2>promise面试</h2>
+    <script>
+      // 同步与异步
+      // Promise 构造函数 同步执行
+      // then方法 异步执行
+      const promise = new Promise((resolve, reject) => {
+        console.log(1);
+        resolve();
+        console.log(2);
+      });
+      promise.then(() => {
+        console.log(3);
+      });
+      console.log(4);
+
+      // 1,2,4,3
+
+      // 构造函数 执行一次
+      // then（） 可以多次执行
+      const promise2 = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          console.log("once");
+          resolve(scuccess);
+        });
+      });
+      promise2.then((res) => {
+        console.log(res);
+      });
+      promise2.then((res) => {
+        console.log(res);
+      });
+      // once success success
+    </script>
+  </body>
+</html>

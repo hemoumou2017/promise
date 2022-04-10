@@ -1,0 +1,82 @@
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+    <h1>Promise应用</h1>
+    <script>
+      // 调用接口
+      // 为什么会出现promise？ --为了解决回调地狱
+      // 最好的异步解决方案
+
+      // promise =》承诺，诺言
+
+      // 许诺 =》 异步的
+      // 具体值 pending(待定状态) => fulfilled（成功）, reject（失败）
+      let isForget = true;
+      let getPrisent = new Promise((resolve, reject) => {
+        if (isForget) {
+          let prisent = {
+            color: "orange",
+            price: "$99",
+          };
+          resolve(prisent);
+        } else {
+          let err = new Error("do something");
+          reject(err);
+        }
+      });
+      let testFn = function () {
+        getPrisent
+          .then((fulfilled) => {
+            console.log(fulfilled);
+          })
+          .catch((reject) => {
+            console.log(reject);
+          });
+      };
+      testFn();
+      // {
+      //     "coor": "orange",
+      //     "price": "$99"
+      // }
+
+      let buyOther = (prisent) => {
+        let lip = {
+          brand: "卧槽",
+          color: "pink",
+        };
+        let msg = {
+          message: "我买的是" + lip.brand + lip.color + "搭配" + prisent.color,
+          lip: lip,
+          prisent: prisent,
+        };
+        return new myPromise(function (y, n) {
+          y(msg);
+        });
+      };
+      let testFn2 = () => {
+        getPrisent
+          .then(buyOther)
+          .then((fulfilled) => {
+            console.log(fulfilled);
+          })
+          .catch((rejected) => {
+            console.log(rejected);
+          });
+      };
+      testFn2();
+      // {
+      //     "message": "我买的是卧槽pink搭配orange",
+      //     "lip": {
+      //         "brand": "卧槽",
+      //         "color": "pink"
+      //     },
+      //     "prisent": {
+      //         "color": "orange",
+      //         "price": "$99"
+      //     }
+      // }
+    </script>
+  </body>
+</html>
